@@ -1,7 +1,7 @@
 import socket
-import ssl
 import threading
 import random
+from window import Window
 
 
 class colors:
@@ -62,4 +62,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    app = Window()
+    app.mainloop()
