@@ -68,7 +68,7 @@ class Window(customtkinter.CTk):
         self.lbl_status.grid(row=0, column=1 , padx=10)
 
     def log(self, message):
-        self.txt_log.insert("end", message + "\n")
+        self.txt_log.insert("end", message)
         self.txt_log.see("end")
 
     def toggle_server(self):
@@ -86,14 +86,17 @@ class Window(customtkinter.CTk):
         self.lbl_url.configure(text=f"{proxy_address}:{proxy_port}")
 
         self.proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         try:
             self.proxy_socket.bind((proxy_address, proxy_port))
             self.proxy_socket.listen(5)
-            self.log(f"Server listening on {proxy_address}:{proxy_port}")
+            self.log(f"Server listening on {proxy_address}:{proxy_port}\n")
             threading.Thread(target=self.accept_connections, daemon=True).start()
         except Exception as e:
-            self.log(f"Failed to start server: {e}")
-            self.stop_server()
+            if e.errno==98:
+                self.log(f"Failed to start server on port: {proxy_port}\n")
+                self.log(f"Port already in use!")
+                self.stop_server()
 
     def stop_server(self):
         self.server_running = False
@@ -102,27 +105,27 @@ class Window(customtkinter.CTk):
         if self.proxy_socket:
             self.proxy_socket.close()
             self.proxy_socket = None
-        self.log("Server stopped.")
+        self.log("\nServer stopped.\n")
 
     def accept_connections(self):
         while self.server_running:
             try:
                 client_socket, address = self.proxy_socket.accept()
-                self.log(f"Connection from {address}")
+                self.log(f"Connection from {address}\n")
                 threading.Thread(
                     target=self.handle_client, args=(client_socket,), daemon=True
                 ).start()
             except OSError:
                 break  # Socket closed
             except Exception as e:
-                self.log(f"Error accepting connections: {e}")
+                self.log(f"Error accepting connections: {e}\n")
 
     def handle_client(self, client_socket):
         try:
             request = client_socket.recv(4096)
             if not request:
-                raise Exception("Client disconnected")
-            self.log(f"Request from client: {request.decode()}")
+                raise Exception("Client disconnected\n")
+            self.log(f"Request from client: {request.decode()}\n")
             client_socket.close()
         except Exception as e:
-            self.log(f"Error handling client: {e}")
+            self.log(f"Error handling client: {e}\n")
